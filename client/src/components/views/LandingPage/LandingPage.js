@@ -5,7 +5,10 @@ import { Icon, Col, Card, Row } from "antd";
 import Meta from "antd/lib/card/Meta";
 import ImageSlider from "../../utils/ImageSlider";
 import CheckBox from "./Sections/CheckBox";
-import { continents } from "./Sections/Datas";
+import RadioBox from "./Sections/RadioBox";
+import SearchFeature from "./Sections/SearchFeature";
+
+import { continents, price } from "./Sections/Datas";
 
 function LandingPage() {
   const [Products, setProducts] = useState([]);
@@ -19,6 +22,7 @@ function LandingPage() {
     continents: [],
     price: [],
   });
+  const [SearchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     let body = {
@@ -55,6 +59,7 @@ function LandingPage() {
       skip: skip,
       limit: Limit,
       loadMore: true,
+      filters: Filters,
     };
     getProducts(body);
     setSkip(skip);
@@ -63,7 +68,13 @@ function LandingPage() {
   const renderCards = Products.map((product, index) => {
     return (
       <Col lg={6} md={8} xs={24} key={index}>
-        <Card cover={<ImageSlider images={product.images} />}>
+        <Card
+          cover={
+            <a href={`/product/${product._id}`}>
+              <ImageSlider images={product.images} />
+            </a>
+          }
+        >
           <Meta title={product.title} description={`$${product.price}`} />
         </Card>
       </Col>
@@ -82,15 +93,50 @@ function LandingPage() {
     setSkip(0);
   };
 
+  const handlePrice = (value) => {
+    const data = price;
+    let array = [];
+
+    console.log("value : ", value);
+    for (let key in data) {
+      if (data[key]._id === parseInt(value, 10)) {
+        array = data[key].array;
+        console.log("array : ", array);
+      }
+    }
+    return array;
+  };
+
   const handleFilters = (filters, category) => {
-    console.log("filters :", filters);
+    console.log("filters, category :", filters, category);
     const newFilters = { ...Filters };
 
     newFilters[category] = filters;
 
+    if (category === "price") {
+      let priceValues = handlePrice(filters);
+      console.log("priceValues : ", priceValues);
+      newFilters["price"] = priceValues;
+    }
+
     showFilteredResults(newFilters);
+    setFilters(newFilters);
   };
 
+  const updateSearchTerm = (newSearchTerm) => {
+    let body = {
+      skip: 0,
+      limit: Limit,
+      filters: Filters,
+      searchTerm: newSearchTerm,
+    };
+
+    setSkip(0);
+    setSearchTerm(newSearchTerm);
+    getProducts(body);
+  };
+
+  console.log("부모 : ", SearchTerm);
   return (
     <div style={{ width: "75%", margin: "3rem auto" }}>
       <div style={{ textAlign: "center" }}>
@@ -101,17 +147,36 @@ function LandingPage() {
 
       {/* Filter */}
 
-      {/* CheckBox */}
-      {/* CheckBox.js(자식)에서 부모로 보낸 업데이트된 정보가 */}
-      {/* handleFilters={(filters <<)} 요기로 가게됨 */}
-      <CheckBox
-        list={continents}
-        handleFilters={(filters) => handleFilters(filters, "continents")}
-      />
+      <Row gutter={[16, 16]}>
+        <Col lg={12} xs={24}>
+          {/* CheckBox */}
+          {/* CheckBox.js(자식)에서 부모로 보낸 업데이트된 정보가 */}
+          {/* handleFilters={(filters <<)} 요기로 가게됨 */}
+          <CheckBox
+            list={continents}
+            handleFilters={(filters) => handleFilters(filters, "continents")}
+          />
+        </Col>
+        <Col lg={12} xs={24}>
+          {/* RadioBox */}
+        </Col>
+      </Row>
+
       {/* RadioBox */}
-
+      <RadioBox
+        list={price}
+        handleFilters={(filters) => handleFilters(filters, "price")}
+      />
       {/* Search */}
-
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          margin: "1rem auto",
+        }}
+      >
+        <SearchFeature refreshFunction={updateSearchTerm} />
+      </div>
       {/* Cards */}
 
       <Row gutter={[16, 16]}>{renderCards}</Row>
